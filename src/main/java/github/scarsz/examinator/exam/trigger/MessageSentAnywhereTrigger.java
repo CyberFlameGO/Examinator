@@ -21,7 +21,7 @@ public class MessageSentAnywhereTrigger extends Trigger {
         if (!exam.getGuild().equals(event.getGuild())) return;
         if (event.getAuthor().isBot()) return;
 
-        if (event.getMessage().getRawContent().toLowerCase().startsWith(message)) {
+        if (event.getMessage().getContentRaw().toLowerCase().startsWith(message)) {
             exam.take(this, event.getChannel(), event.getMember());
         }
     }

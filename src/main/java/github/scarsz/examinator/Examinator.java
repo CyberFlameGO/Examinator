@@ -4,6 +4,7 @@ import com.jagrosh.jdautilities.waiter.EventWaiter;
 import github.scarsz.examinator.exam.Exam;
 import github.scarsz.examinator.exam.TestingSession;
 import github.scarsz.examinator.manager.ConfigurationManager;
+import github.scarsz.examinator.util.Timeout;
 import net.dv8tion.jda.core.AccountType;
 import net.dv8tion.jda.core.JDA;
 import net.dv8tion.jda.core.JDABuilder;
@@ -17,6 +18,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -26,7 +28,8 @@ public class Examinator {
     private final JDA jda;
     private final EventWaiter waiter = new EventWaiter();
     private final Set<Exam> exams = new HashSet<>();
-    private final Set<TestingSession> sessions = new HashSet<>();
+    private final Timeout timeout;
+    private final List<TestingSession> sessions = new ArrayList<>();
     private final ConfigurationManager configurationManager;
 
     private static final File examsFile = new File("exams.json");
@@ -40,6 +43,7 @@ public class Examinator {
                 .setToken(botToken)
                 .buildBlocking();
         examPool = new ExamPool(this);
+        timeout = new Timeout();
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown, "Examinator - Shutdown thread"));
         Exam.loadExamsFromFile(this, examsFile);
         configurationManager = new ConfigurationManager(this);
@@ -76,6 +80,9 @@ public class Examinator {
     public JDA getJda() {
         return jda;
     }
+    public Timeout getTimeout() {
+        return timeout;
+    }
     public EventWaiter getWaiter() {
         return waiter;
     }
@@ -85,7 +92,7 @@ public class Examinator {
     public Set<Exam> getExams(Guild guild) {
         return exams.stream().filter(exam -> exam.getGuild().equals(guild)).collect(Collectors.toSet());
     }
-    public Set<TestingSession> getSessions() {
+    public List<TestingSession> getSessions() {
         return sessions;
     }
 

@@ -24,7 +24,7 @@ public class MessageSentToChannelTrigger extends Trigger {
         if (event.getAuthor().isBot()) return;
         if (!event.getChannel().getId().equals(channelId)) return;
 
-        if (event.getMessage().getRawContent().toLowerCase().startsWith(message)) {
+        if (event.getMessage().getContentRaw().toLowerCase().startsWith(message)) {
             exam.take(this, event.getChannel(), event.getMember());
         }
     }

@@ -70,6 +70,7 @@ public class TestingSession {
     public void setFinished() {
         if (finishTime != 0) throw new RuntimeException("Session already set as finished");
         finishTime = System.currentTimeMillis();
+
     }
     public long getFinishTime() {
         return finishTime;
@@ -81,7 +82,17 @@ public class TestingSession {
     }
 
     public void destroy() {
-        examinator.getSessions().remove(this);
+        examinator.getSessions();
+        examinator.getSessions().removeIf(testingSession -> testingSession.getMember().equals(member));
+        examinator.getSessions();
+    }
+
+    @Override
+    public String toString() {
+        return "TestingSession{" +
+                "exam=" + exam +
+                ", member=" + member +
+                '}';
     }
 
 }

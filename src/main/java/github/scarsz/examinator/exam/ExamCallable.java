@@ -46,6 +46,7 @@ public class ExamCallable implements Callable<Object> {
     @Override
     public Object call() {
         try {
+            //TODO: customize category name
             List<Category> possibleCategories = exam.getGuild().getCategoriesByName("Exams", true);
             if (possibleCategories.size() == 0) possibleCategories.add((Category) exam.getGuild().getController().createCategory("Exams").complete());
             if (possibleCategories.size() == 0) return null;
@@ -54,10 +55,10 @@ public class ExamCallable implements Callable<Object> {
             targetChannel = (TextChannel) exam.getGuild().getController().createTextChannel(member.getUser().getId() + "-" + System.currentTimeMillis())
                     .addPermissionOverride(exam.getGuild().getPublicRole(), Collections.emptyList(), Collections.singleton(Permission.MESSAGE_READ))
                     .addPermissionOverride(member, Arrays.asList(Permission.MESSAGE_READ, Permission.MESSAGE_WRITE, Permission.MESSAGE_ADD_REACTION), null)
-                    .setParent(exam.getGuild().getCategoriesByName("Exams", true).get(0)) //TODO: customize category name
+                    .setParent(targetCategory)
                     .complete();
             examChannelMessage = sourceChannel.sendMessage(member.getAsMention() + ", your exam channel is " + targetChannel.getAsMention() + ".").complete();
-            examChannelMessage.delete().queueAfter(1, TimeUnit.MINUTES);
+            examChannelMessage.delete().queueAfter(30, TimeUnit.SECONDS);
         } catch (Exception e) {
             exam.getGuild().getOwner().getUser().openPrivateChannel().queue(pm -> pm.sendMessage("I failed to create a text channel in your server `" + exam.getGuild().getName() + "`: `" + e.getMessage() + "`").queue());
             return null;
@@ -77,16 +78,14 @@ public class ExamCallable implements Callable<Object> {
         }
         session.setFinished();
 
-        targetChannel.delete().reason("Exam channel [" + exam.getName() + " | " + member.getUser().getId() + " | " + session.getResult().toString() + " | " + TimeUtil.timestamp() + "]").queue();
         exam.getActions().forEach(action -> action.execute(session));
         destroy();
         return null;
     }
 
     public void destroy() {
-        examChannelMessage.delete().complete();
+        targetChannel.delete().reason("Exam channel [" + exam.getName() + " | " + member.getUser().getId() + " | " + session.getResult().toString() + " | " + TimeUtil.timestamp() + "]").queue();
         session.destroy();
-        targetChannel.delete().complete();
         examinator.getExamPool().getActiveExams().remove(this);
     }
 

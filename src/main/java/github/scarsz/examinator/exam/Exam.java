@@ -6,6 +6,7 @@ import github.scarsz.examinator.exam.question.MultipleChoiceQuestion;
 import github.scarsz.examinator.exam.question.Question;
 import github.scarsz.examinator.exam.question.TrueFalseQuestion;
 import github.scarsz.examinator.exam.trigger.*;
+import github.scarsz.examinator.util.TimeUtil;
 import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.Member;
 import net.dv8tion.jda.core.entities.TextChannel;
@@ -61,12 +62,20 @@ public class Exam {
         examinator.getExams().remove(this);
     }
     public void take(Trigger trigger, TextChannel channel, Member member) {
-        if (examinator.getSessions().stream().anyMatch(session -> session.getMember().equals(member))) {
-            channel.sendMessage(member.getAsMention() + ", you are already taking an exam. Please finish that one before starting another.").queue(message -> message.delete().queueAfter(1, TimeUnit.MINUTES));
+        if (examinator.getTimeout().isOnTimeout(member.getUser(), uuid)) {
+            channel.sendMessage(member.getAsMention() + ", you have already attempted this exam. You need to wait for `" + TimeUtil.formatDuration(examinator.getTimeout().getDuration(member.getUser(), uuid)) + "` before attempting it again.").queue(message -> message.delete().queueAfter(30, TimeUnit.SECONDS));
             return;
         }
 
+        for (TestingSession session : examinator.getSessions()) {
+            if (session.getMember().equals(member)) {
+                channel.sendMessage(member.getAsMention() + ", you are already taking an exam. Please finish that one before starting another.").queue(message -> message.delete().queueAfter(30, TimeUnit.SECONDS));
+                return;
+            }
+        }
+
         examinator.getExamPool().timedCall(new ExamCallable(examinator, this, trigger, channel, member));
+        examinator.getTimeout().add(member.getUser(), getUuid(), System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(failureCooldown));
         System.out.println("Exam \"" + name + "\" being taken by " + member.getEffectiveName());
     }
 
@@ -126,7 +135,7 @@ public class Exam {
         try {
             examsJson = (JSONArray) new JSONParser().parse(FileUtils.readFileToString(file, Charset.forName("UTF-8")));
         } catch (ParseException | IOException e) {
-            e.printStackTrace();
+            System.out.println("Failed to load exams from file: " + e.getMessage());
             return Collections.emptyList();
         }
 

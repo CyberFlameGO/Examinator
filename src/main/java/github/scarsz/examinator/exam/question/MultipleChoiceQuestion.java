@@ -44,7 +44,7 @@ public class MultipleChoiceQuestion extends Question {
             messageLines.add(":regional_indicator_" + entry.getKey() + ": " + entry.getValue());
             message.addReaction(ReactionUtil.getEmojiFromLetter(entry.getKey())).queue();
         }
-        message.editMessage(message.getRawContent() + "\n\n" + String.join("\n", messageLines)).queue();
+        message.editMessage(message.getContentRaw() + "\n\n" + String.join("\n", messageLines)).queue();
 
         return message;
     }
